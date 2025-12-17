@@ -35,11 +35,12 @@ function App() {
     let parsedFlows: FlowTemplate[] = saved ? JSON.parse(saved) : [];
 
     // CRITICAL FIX: Always remove the old version of the default flow and prepend the new one.
-    // We also clean up previous versions (v1, v2) to avoid duplicates or stale data in the UI.
-    const oldDefaultIds = ['standard-assessment-flow', 'standard-assessment-flow-v2', 'toefl-integrated-flow-v1'];
-    parsedFlows = parsedFlows.filter(f => f.id !== defaultFlow.id && f.id !== toeflFlow.id && !oldDefaultIds.includes(f.id));
+    // We also clean up previous versions and the TOEFL Parallel flow (parked feature).
+    const hiddenFlowIds = ['standard-assessment-flow', 'standard-assessment-flow-v2', 'toefl-integrated-flow-v1'];
+    parsedFlows = parsedFlows.filter(f => f.id !== defaultFlow.id && !hiddenFlowIds.includes(f.id));
 
-    return [defaultFlow, toeflFlow, ...parsedFlows];
+    // Only include the Standard Assessment Flow (toeflFlow is parked)
+    return [defaultFlow, ...parsedFlows];
   });
 
   // Knowledge Files are managed by vectorDb, but we keep a state sync for UI
@@ -270,17 +271,18 @@ function App() {
             <Database size={24} />
             <span className="text-[10px] text-center">Item Bank</span>
           </button>
+        </nav>
 
-          <div className="w-full border-t border-gray-800 my-2"></div>
-
+        {/* User Settings at Bottom */}
+        <div className="w-full px-2 pb-2">
           <button
             onClick={() => { setMode(AppMode.USER_SETTINGS); setGeneratedItem(null); }}
             className={`w-full p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition-colors ${mode === AppMode.USER_SETTINGS ? 'bg-gray-800 text-indigo-400' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
           >
             <User size={24} />
-            <span className="text-[10px] text-center">User</span>
+            <span className="text-[10px] text-center">Settings</span>
           </button>
-        </nav>
+        </div>
       </aside>
 
       {/* Main Content */}
