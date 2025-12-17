@@ -33,9 +33,9 @@ cd Assessment-Forge
 ```
 _(Auto-installs Node.js & Python if missing on Mac)_
 
-**Windows:**
+**Windows (PowerShell / CMD):**
 ```cmd
-install.bat
+.\install.bat
 ```
 _(Auto-downloads & installs Node.js/Python if missing!)_
 
@@ -45,9 +45,9 @@ _(Auto-downloads & installs Node.js/Python if missing!)_
 ./start.sh
 ```
 
-**Windows:**
+**Windows (PowerShell / CMD):**
 ```cmd
-start.bat
+.\start.bat
 ```
 
 > **Note:** These scripts automatically create an **isolated** environment (`venv`) for Python. Your system installation stays clean! 🧹
