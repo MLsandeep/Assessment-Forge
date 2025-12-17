@@ -50,6 +50,9 @@ _(Auto-downloads & installs Node.js/Python if missing!)_
 start.bat
 ```
 
+> **Note:** These scripts automatically create an **isolated** environment (`venv`) for Python. Your system installation stays clean! 🧹
+
+
 ### Step 3: Open in Browser
 Go to: **http://localhost:3000**
 
