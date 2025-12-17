@@ -52,13 +52,13 @@ FILES_METADATA: Dict[str, Dict[str, Any]] = {}
 VECTOR_STORES: Dict[str, FAISS] = {}
 
 # Initialize embeddings (FREE local model)
-print("🔄 Loading embedding model (first time may take a moment)...")
+print("[INFO] Loading embedding model (first time may take a moment)...")
 embeddings = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2",
     model_kwargs={'device': 'cpu'},
     encode_kwargs={'normalize_embeddings': True}
 )
-print("✅ Embedding model loaded!")
+print("[OK] Embedding model loaded!")
 
 # Text splitter config (same as Python test)
 text_splitter = RecursiveCharacterTextSplitter(
@@ -124,7 +124,7 @@ async def upload_file(file: UploadFile = File(...)):
     with open(file_path, "wb") as f:
         f.write(content)
     
-    print(f"📄 Processing {file.filename}...")
+    print(f"[INFO] Processing {file.filename}...")
     
     try:
         # Load PDF
@@ -133,11 +133,11 @@ async def upload_file(file: UploadFile = File(...)):
         
         # Split into chunks
         chunks = text_splitter.split_documents(docs)
-        print(f"✅ Created {len(chunks)} chunks")
+        print(f"[OK] Created {len(chunks)} chunks")
         
         # Create FAISS vector store
         vectorstore = FAISS.from_documents(chunks, embeddings)
-        print(f"✅ Created FAISS index for {file.filename}")
+        print(f"[OK] Created FAISS index for {file.filename}")
         
         # Save index
         vectorstore.save_local(str(INDEX_DIR / file_id))
@@ -196,7 +196,7 @@ async def search(request: SearchRequest):
     
     chunks = [doc.page_content for doc in docs]
     
-    print(f"🔍 Query: '{request.query[:50]}...' -> {len(chunks)} chunks")
+    print(f"[SEARCH] Query: '{request.query[:50]}...' -> {len(chunks)} chunks")
     
     return SearchResult(
         chunks=chunks,
@@ -247,9 +247,9 @@ async def load_existing_indices():
                     "chunks": 0,
                     "path": ""
                 }
-                print(f"✅ Loaded existing index: {file_id}")
+                print(f"[OK] Loaded existing index: {file_id}")
             except Exception as e:
-                print(f"⚠️ Failed to load index {file_id}: {e}")
+                print(f"[WARN] Failed to load index {file_id}: {e}")
 
 
 if __name__ == "__main__":
