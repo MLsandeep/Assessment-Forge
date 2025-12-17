@@ -1,10 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
 :: ==============================================
-:: Assessment Forge - Robust Windows Installer v2
+:: Assessment Forge - Robust Windows Installer v3
 :: ==============================================
 echo 🚀 Setting up Assessment Forge...
 echo -----------------------------------
+
+set "NEEDS_RESTART=0"
 
 :: --- NODE.JS CHECK & INSTALL ---
 where node >nul 2>nul
@@ -31,6 +33,7 @@ if %errorlevel% neq 0 (
     
     del node_install.msi
     echo ✅ Node.js installed.
+    set "NEEDS_RESTART=1"
 ) else (
     echo ✅ Node.js is already installed.
 )
@@ -56,32 +59,26 @@ if %errorlevel% neq 0 (
     )
 
     echo    Running Python installer... (please accept the prompt)
-    :: Important: Arguments must be correct for silent install with PATH
     start /wait python_install.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
     
     del python_install.exe
     echo ✅ Python installed.
-    
-    :: Refresh Environment to pick up new python command
-    echo    Refreshing environment...
-    call RefreshEnv.cmd >nul 2>nul
+    set "NEEDS_RESTART=1"
 ) else (
     echo ✅ Python is already installed.
 )
 
-:: --- REFRESH PATH HACK ---
-:: Updates PATH variable in current session without restart
-for /f "tokens=2,*" %%A in ('reg query HKCU\Environment /v Path') do set USERPATH=%%B
-for /f "tokens=2,*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path') do set SYSPATH=%%B
-set PATH=%USERPATH%;%SYSPATH%;%PATH%
-
-:: --- VERIFY INSTALLATION ---
-where python >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ⚠️ Verification failed: Python command still not found.
-    echo    Please RESTART YOUR COMPUTER and run this script again.
+:: --- IF NEW TOOLS INSTALLED, FORCE RESTART OF SCRIPT ---
+if "%NEEDS_RESTART%"=="1" (
+    echo.
+    echo ========================================================
+    echo ⚠️  IMPORTANT: New tools were installed (Node.js/Python).
+    echo    Please CLOSE this window and RUN .\install.bat AGAIN
+    echo    to recognize the new commands.
+    echo ========================================================
+    echo.
     pause
-    exit /b 1
+    exit /b 0
 )
 
 :: --- VIRTUAL ENV SETUP (The user's question about venv) ---
@@ -112,6 +109,15 @@ if !errorlevel! neq 0 (
 :: --- FRONTEND SETUP ---
 echo.
 echo 📦 Installing Frontend Dependencies...
+:: Ensure npm is found or provide valid error
+where npm >nul 2>nul
+if %errorlevel% neq 0 (
+    echo ❌ 'npm' command not found.
+    echo    If you just installed Node.js, please CLOSE this window and run install.bat again.
+    pause
+    exit /b 1
+)
+
 call npm install
 if !errorlevel! neq 0 (
     echo ❌ npm install failed.
