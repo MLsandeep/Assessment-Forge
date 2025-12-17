@@ -61,7 +61,7 @@ function App() {
   // --- INITIAL LOAD ---
   useEffect(() => {
     // 1. Sync UI with VectorDB on load
-    setKnowledgeFiles(vectorDb.getFiles());
+    setKnowledgeFiles(vectorDb.getFilesSync());
 
     // 2. Ensure default knowledge base (14 Rules PDF) exists
     const initDefaultKB = async () => {
@@ -72,7 +72,7 @@ function App() {
           defaultRulesContent
         );
         // Refresh state after potential ingestion
-        setKnowledgeFiles(vectorDb.getFiles());
+        setKnowledgeFiles(vectorDb.getFilesSync());
       } catch (err) {
         console.error("Failed to initialize default knowledge base:", err);
       }
@@ -186,11 +186,11 @@ function App() {
   };
 
   const handleAddFile = (file: KnowledgeFile) => {
-    setKnowledgeFiles(vectorDb.getFiles());
+    setKnowledgeFiles(vectorDb.getFilesSync());
   };
 
   const handleDeleteFile = (id: string) => {
-    setKnowledgeFiles(vectorDb.getFiles());
+    setKnowledgeFiles(vectorDb.getFilesSync());
   };
 
   const handleSaveFlow = (flow: FlowTemplate) => {
