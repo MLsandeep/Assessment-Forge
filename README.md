@@ -37,6 +37,7 @@ _(Auto-installs Node.js & Python if missing on Mac)_
 ```cmd
 install.bat
 ```
+_(Auto-installs Node.js & Python if missing via Winget!)_
 
 ### Step 2: Run
 **Mac / Linux:**
