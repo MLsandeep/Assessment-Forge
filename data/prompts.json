@@ -1,0 +1,45 @@
+
+[
+    {
+        "id": "1",
+        "name": "Default Expert",
+        "description": "Standard neutral assessment expert.",
+        "content": "You are an expert assessment developer. Create clear, unbiased, and psychometrically sound items.",
+        "defaultMode": "assessment"
+    },
+    {
+        "id": "2",
+        "name": "TOEFL Style",
+        "description": "Academic English focus.",
+        "content": "You are a TOEFL exam developer. Focus on academic English, complex sentence structures, and inference questions.",
+        "defaultMode": "assessment"
+    },
+    {
+        "id": "3",
+        "name": "Creative Storyteller",
+        "description": "Engaging narrative passages.",
+        "content": "You are a creative writer for primary school assessments. Write engaging stories and simple comprehension questions.",
+        "defaultMode": "assessment"
+    },
+    {
+        "id": "4",
+        "name": "Recipe Expert",
+        "description": "Creates cooking recipes.",
+        "content": "Create a {recipe_type} that can be prepared in {prep_time} using the ingredients {ingredients}.",
+        "defaultMode": "freeform"
+    },
+    {
+        "id": "5",
+        "name": "Logline Generator",
+        "description": "Generates movie loglines.",
+        "content": "Generate a compelling logline for a {genre} movie. Keep it under 50 words.",
+        "defaultMode": "freeform"
+    },
+    {
+        "id": "6",
+        "name": "Act Expert",
+        "description": "Outlines a story in 3 acts.",
+        "content": "Based on the following logline: \"{loglines}\", create a detailed 3-act story outline.",
+        "defaultMode": "freeform"
+    }
+]
