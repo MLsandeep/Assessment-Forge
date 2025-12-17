@@ -768,7 +768,29 @@ const FlowBuilderContent: React.FC<FlowBuilderProps> = ({ onItemGenerated, avail
 
                         <div className="flex gap-2">
                             <button
-                                onClick={() => { setNodes(initialNodes); setEdges(initialEdges); setTimeout(() => reactFlowInstance?.fitView(), 50); }}
+                                onClick={() => {
+                                    // Reset with prompts injected
+                                    const resetNodes = initialNodes.map(node => {
+                                        if (node.type === 'textGen') {
+                                            return {
+                                                ...node,
+                                                data: {
+                                                    ...node.data,
+                                                    prompts: availablePrompts,
+                                                    files: availableFiles,
+                                                    onPromptChange: onNodePromptChange,
+                                                    onPromptVarChange: onNodePromptVarChange,
+                                                    onOutputModeChange: onOutputModeChange,
+                                                    onKnowledgeConfigChange: onKnowledgeConfigChange
+                                                }
+                                            };
+                                        }
+                                        return node;
+                                    });
+                                    setNodes(resetNodes);
+                                    setEdges(initialEdges);
+                                    setTimeout(() => reactFlowInstance?.fitView(), 50);
+                                }}
                                 className="px-3 py-1.5 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 text-gray-600">
                                 <RotateCcw size={12} /> Reset
                             </button>
