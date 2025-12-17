@@ -85,5 +85,12 @@ export const initialPrompts: SystemPrompt[] = [
         "description": "Creates the final assessment item.",
         "content": "You are a TOEFL exam developer.\n\nREADING PASSAGE:\n\"\"\"\n{__main_content__}\n\"\"\"\n\n(Note: An image was also provided to the student depicting: {imageDescription})\n\nCreate a TOEFL Integrated Writing prompt that asks the student to summarize the points made in the lecture (represented by the image/description) and explain how they cast doubt on specific points made in the reading passage.\n\nOutput as a structured JSON assessment item.",
         "defaultMode": "assessment"
+    },
+    {
+        "id": "rag-qa",
+        "name": "RAG: Document Q&A",
+        "description": "Answers questions based on uploaded documents.",
+        "content": "You are a helpful assistant.\n\nQUESTION: {question}\n\nPlease answer the question using the provided Reference Material.",
+        "defaultMode": "freeform"
     }
 ];

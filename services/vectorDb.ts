@@ -1,6 +1,6 @@
 
 import { KnowledgeFile, KnowledgeChunk } from '../types';
-import { embedContent } from './geminiService';
+import { embedContentLocal } from './localEmbeddings';
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 /**
@@ -12,6 +12,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
  * - True persistence across browser sessions
  * - Async operations (non-blocking)
  * - Cosine similarity search for k-NN retrieval
+ * - Local embeddings using all-MiniLM-L6-v2 (runs in browser)
  */
 
 // --- Chunking Configuration ---
@@ -142,6 +143,30 @@ export class VectorStore {
     return Array.from(this.filesCache.values());
   }
 
+  // Get storage usage statistics
+  public getStorageStats(): { usedBytes: number; usedMB: number; maxMB: number; percentUsed: number } {
+    let totalBytes = 0;
+
+    this.filesCache.forEach(file => {
+      // Estimate size: content + embeddings (each embedding is ~768 floats * 8 bytes)
+      const contentSize = new Blob([file.content || '']).size;
+      const embeddingSize = (file.chunks || []).reduce((acc, chunk) => {
+        return acc + (chunk.embedding?.length || 0) * 8; // 8 bytes per float64
+      }, 0);
+      totalBytes += contentSize + embeddingSize;
+    });
+
+    const usedMB = totalBytes / (1024 * 1024);
+    const maxMB = 50; // IndexedDB allows ~50MB minimum, often more
+
+    return {
+      usedBytes: totalBytes,
+      usedMB: Math.round(usedMB * 100) / 100,
+      maxMB,
+      percentUsed: Math.min(100, (usedMB / maxMB) * 100)
+    };
+  }
+
   public async getFile(id: string): Promise<KnowledgeFile | undefined> {
     await this.ensureReady();
     return this.filesCache.get(id);
@@ -175,7 +200,7 @@ export class VectorStore {
       await new Promise(r => setTimeout(r, 100));
 
       try {
-        const vector = await embedContent(text);
+        const vector = await embedContentLocal(text);
         if (vector && vector.length > 0) {
           chunks.push({ text, embedding: vector });
         } else {
@@ -226,15 +251,28 @@ export class VectorStore {
   public async similaritySearch(query: string, fileId?: string, k: number = 3): Promise<string> {
     await this.ensureReady();
 
-    const queryVector = await embedContent(query);
-    if (!queryVector || queryVector.length === 0) return "";
+    console.log(`[VectorDB] Similarity search for fileId: ${fileId}`);
+
+    const queryVector = await embedContentLocal(query);
+    if (!queryVector || queryVector.length === 0) {
+      console.warn('[VectorDB] Failed to embed query, returning empty');
+      return "";
+    }
 
     let searchPool: KnowledgeChunk[] = [];
+    let fallbackContent = "";
 
     if (fileId) {
       const file = this.filesCache.get(fileId);
+      console.log(`[VectorDB] Found file in cache: ${file?.name}, chunks: ${file?.chunks?.length || 0}`);
+
       if (file?.chunks) {
         searchPool = file.chunks;
+      }
+
+      // Store fallback content (first 3000 chars) in case embeddings are empty
+      if (file?.content) {
+        fallbackContent = file.content.substring(0, 3000);
       }
     } else {
       // Global search
@@ -244,18 +282,34 @@ export class VectorStore {
     }
 
     // Filter out chunks without embeddings
-    searchPool = searchPool.filter(c => c.embedding && c.embedding.length > 0);
+    const validChunks = searchPool.filter(c => c.embedding && c.embedding.length > 0);
+    console.log(`[VectorDB] Search pool: ${searchPool.length} chunks, ${validChunks.length} with embeddings`);
 
-    if (searchPool.length === 0) return "";
+    // OPTIMIZATION: For small files (<=10 chunks), just return all text (no need for similarity search)
+    if (validChunks.length > 0 && validChunks.length <= 10) {
+      console.log(`[VectorDB] Small file detected (${validChunks.length} chunks), returning all content`);
+      return validChunks.map(c => c.text).join("\n\n");
+    }
+
+    // If no valid embeddings, return fallback content (raw file text)
+    if (validChunks.length === 0) {
+      console.warn('[VectorDB] No embedded chunks found, returning fallback content');
+      if (fallbackContent) {
+        return `[Using raw document content]\n\n${fallbackContent}`;
+      }
+      return "";
+    }
 
     // Calculate Cosine Similarity scores
-    const scored = searchPool.map(chunk => ({
+    const scored = validChunks.map(chunk => ({
       text: chunk.text,
       score: this.cosineSimilarity(queryVector, chunk.embedding)
     }));
 
     // Sort by score (descending)
     scored.sort((a, b) => b.score - a.score);
+
+    console.log(`[VectorDB] Top result score: ${scored[0]?.score.toFixed(4)}`);
 
     // Return top K chunks joined
     return scored.slice(0, k).map(s => s.text).join("\n\n");
@@ -313,3 +367,9 @@ export const vectorDb = new VectorStore();
 
 // Run migration on load
 vectorDb.migrateFromLocalStorage();
+
+// Expose to window for debugging (browser console access)
+if (typeof window !== 'undefined') {
+  (window as any).vectorDb = vectorDb;
+  console.log('[VectorDB] Exposed to window.vectorDb for debugging');
+}

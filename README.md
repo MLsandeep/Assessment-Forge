@@ -8,7 +8,7 @@ AI-powered assessment authoring platform for educators and test developers. Gene
 
 - 📝 **Guided Mode** - Quick form-based item generation
 - 🔗 **Flow Builder** - Visual node editor for complex pipelines
-- 📚 **Knowledge Base** - Upload PDFs to ground AI in your curriculum
+- 📚 **Knowledge Base** - Upload PDFs to ground AI in your curriculum (RAG)
 - ✅ **Quality Assurance** - AI-powered scoring and feedback
 - 💾 **Item Bank** - Save and export assessment items
 
@@ -16,28 +16,29 @@ AI-powered assessment authoring platform for educators and test developers. Gene
 
 ## 🚀 Quick Start (5 minutes)
 
-### Step 1: Clone the Repository
+### Prerequisites
+- **Node.js** (v18+) - [Download](https://nodejs.org)
+- **Python 3** (v3.9+) - [Download](https://python.org)
+- **Google AI API Key** - [Get one here](https://aistudio.google.com/apikey)
+
+### Step 1: Clone & Install
 ```bash
 git clone https://github.com/MLsandeep/Assessment-Forge.git
 cd Assessment-Forge
+./install.sh
 ```
 
-### Step 2: Install Dependencies
+### Step 2: Start the App
 ```bash
-npm install
+./start.sh
 ```
 
-### Step 3: Start the Application
-```bash
-npm run dev
-```
-
-### Step 4: Open in Browser
+### Step 3: Open in Browser
 Go to: **http://localhost:3000**
 
-### Step 5: Add Your API Key
-1. Click **"User"** in the left sidebar
-2. Enter your [Google AI API Key](https://aistudio.google.com/apikey)
+### Step 4: Add Your API Key
+1. Click **"Settings"** at the bottom of the left sidebar
+2. Enter your Google AI API Key
 3. Click **Save**
 
 ---
@@ -56,13 +57,40 @@ Go to: **http://localhost:3000**
 3. Click the topic field and edit variables
 4. Click **Execute Flow**
 
+### Knowledge Base (RAG)
+1. Go to **Knowledge** tab
+2. Upload a PDF document
+3. In Flow Builder, enable **"Use Knowledge"** on a Text Generator node
+4. The AI will use content from your PDF to generate better items!
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Assessment Forge                      │
+├─────────────────────────┬───────────────────────────────┤
+│   Frontend (React)      │   RAG Backend (Python)        │
+│   Port 3000             │   Port 8000                   │
+├─────────────────────────┼───────────────────────────────┤
+│ • UI Components         │ • PDF Processing              │
+│ • Flow Builder          │ • FREE Local Embeddings       │
+│ • Item Generation       │ • FAISS Vector Search         │
+│ • IndexedDB Storage     │ • Similarity Search API       │
+└─────────────────────────┴───────────────────────────────┘
+          │                         │
+          └────── Gemini API ───────┘
+              (for text generation)
+```
+
 ---
 
 ## 🔑 Getting an API Key
 
 1. Go to [Google AI Studio](https://aistudio.google.com/apikey)
 2. Click **"Get API Key"**
-3. Copy the key and paste it in User Settings
+3. Copy the key and paste it in Settings
 
 ---
 
@@ -78,20 +106,23 @@ For detailed information about:
 
 ---
 
-## �️ Tech Stack
+## 🛠️ Tech Stack
 
 | Component | Technology |
 |-----------|-----------|
 | Frontend | React, TypeScript, Tailwind CSS |
 | Visual Editor | React Flow |
-| AI | Google Gemini API |
+| AI Generation | Google Gemini API |
+| RAG Backend | Python, FastAPI, LangChain |
+| Vector Search | FAISS with HuggingFace Embeddings |
+| Storage | IndexedDB (browser), FAISS (backend) |
 
 ---
 
-## � License
+## 📝 License
 
 Proprietary - Internal Use
 
 ---
 
-**Version**: 1.8.0 | **Last Updated**: December 2024
+**Version**: 2.0.0 | **Last Updated**: December 2024

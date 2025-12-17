@@ -3,6 +3,7 @@ import type { Node, Edge } from 'reactflow';
 import { FlowNodeData, SystemPrompt, KnowledgeFile, AssessmentItem } from '../types';
 import { generateTextItem, generateFreeform, generateItemImage, evaluateItemQuality } from './geminiService';
 import { vectorDb } from './vectorDb';
+import { searchRag, isRagBackendAvailable } from './ragApiClient';
 
 interface ExecuteFlowOptions {
     nodes: Node<FlowNodeData>[];
@@ -165,15 +166,69 @@ export const executeFlow = async ({
 
                     let ragContext = "";
                     if (node.data.useKnowledge && node.data.knowledgeFileId) {
-                        ragContext = await runCancellable(
-                            vectorDb.similaritySearch(systemInstruction, node.data.knowledgeFileId),
-                            abortSignal
-                        );
+                        // Build a focused search query from variables, not the full prompt
+                        const searchTerms: string[] = [];
+
+                        // Extract key terms from variables
+                        if (mergedVariables['topic']) searchTerms.push(mergedVariables['topic'] as string);
+                        if (mergedVariables['subject']) searchTerms.push(mergedVariables['subject'] as string);
+                        if (mergedVariables['skill']) searchTerms.push(mergedVariables['skill'] as string);
+                        if (upstreamData.question) searchTerms.push(upstreamData.question);
+                        if (upstreamData.passage) searchTerms.push(upstreamData.passage.substring(0, 200));
+
+                        // If no specific terms, use the first 200 chars of the instruction
+                        const searchQuery = searchTerms.length > 0
+                            ? searchTerms.join(' ')
+                            : systemInstruction.substring(0, 300);
+
+                        console.log('[RAG] Search query:', searchQuery.substring(0, 100) + '...');
+
+                        // Try Python RAG backend first (FREE local embeddings)
+                        try {
+                            const backendAvailable = await isRagBackendAvailable();
+                            if (backendAvailable) {
+                                console.log('[RAG] Using Python backend (FREE embeddings)');
+                                const result = await runCancellable(
+                                    searchRag(searchQuery, node.data.knowledgeFileId, 5),
+                                    abortSignal
+                                );
+                                ragContext = result.chunks.join('\n\n');
+                            } else {
+                                // Fall back to browser-side vector DB
+                                console.log('[RAG] Backend unavailable, using browser-side search');
+                                ragContext = await runCancellable(
+                                    vectorDb.similaritySearch(searchQuery, node.data.knowledgeFileId, 5),
+                                    abortSignal
+                                );
+                            }
+                        } catch (backendError) {
+                            console.warn('[RAG] Backend error, falling back to browser:', backendError);
+                            ragContext = await runCancellable(
+                                vectorDb.similaritySearch(searchQuery, node.data.knowledgeFileId, 5),
+                                abortSignal
+                            );
+                        }
                     }
 
-                    debugPrompt = systemInstruction;
+                    // If RAG context is available, inject it directly into the system instruction
+                    let enhancedInstruction = systemInstruction;
+                    if (ragContext && ragContext.trim()) {
+                        enhancedInstruction = `${systemInstruction}
+
+---
+IMPORTANT: Use the following REFERENCE MATERIAL from the knowledge base to inform your response. Base your answer on this content:
+
+"""
+${ragContext}
+"""
+
+Make sure to incorporate information from the reference material above in your response.
+---`;
+                    }
+
+                    debugPrompt = enhancedInstruction;
                     if (ragContext) {
-                        debugPrompt += "\n\n[RAG Context Injected(" + ragContext.length + " chars)]...";
+                        debugPrompt += "\n\n[RAG Context Injected(" + ragContext.length + " chars)]";
                     }
 
                     const topic = mergedVariables['topic'] || 'General';
@@ -181,14 +236,14 @@ export const executeFlow = async ({
 
                     if (mode === 'freeform') {
                         const generated = await runCancellable(
-                            generateFreeform("You are a creative assistant.", systemInstruction, ragContext),
+                            generateFreeform("You are a helpful assistant.", enhancedInstruction, ""), // Context already in instruction
                             abortSignal
                         );
                         // Merge upstream data (like imageUrl) with generated content
                         output = { ...upstreamData, ...generated };
                     } else {
                         const generated = await runCancellable(
-                            generateTextItem(systemInstruction, { topic, skill: 'General', difficulty: 'B1', type: 'Multiple Choice' }, ragContext),
+                            generateTextItem(enhancedInstruction, { topic, skill: 'General', difficulty: 'B1', type: 'Multiple Choice' }, ""), // Context already in instruction
                             abortSignal
                         );
                         // Merge upstream data (like imageUrl) with generated content

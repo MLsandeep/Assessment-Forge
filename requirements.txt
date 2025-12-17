@@ -1,0 +1,21 @@
+# Assessment Forge - Python Requirements
+# RAG Backend dependencies for PDF processing and vector search
+
+# LangChain ecosystem
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-text-splitters>=0.0.1
+
+# Vector search
+faiss-cpu>=1.7.4
+
+# PDF processing
+pypdf>=3.17.0
+
+# Local embeddings (FREE, no API cost!)
+sentence-transformers>=2.2.2
+
+# API server
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
