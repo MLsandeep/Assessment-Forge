@@ -1,125 +1,118 @@
 @echo off
 setlocal enabledelayedexpansion
 :: ==============================================
-:: Assessment Forge - Windows Installer v4 (PowerShell Native)
+:: Assessment Forge - Windows Installer v5 (ASCII Safe)
 :: ==============================================
-echo 🚀 Setting up Assessment Forge...
+echo [INFO] Setting up Assessment Forge...
 echo -----------------------------------
 
 set "INSTALLER_DIR=%CD%"
 set "NEEDS_RESTART=0"
 
-:: --- NODE.JS CHECK & INSTALL ---
+:: --- NODE.JS CHECK ---
 where node >nul 2>nul
 if %errorlevel% neq 0 (
-    echo 📦 Node.js not found. Installing Node.js (User Scope)...
+    echo [INFO] Node.js not found. Installing Node.js...
     
-    :: Use PowerShell to download (Reliable)
-    echo    Downloading Node.js...
+    echo        Downloading Node.js...
     powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile 'node_install.msi'"
     
     if not exist node_install.msi (
-        echo ❌ Download failed. Check internet connection.
+        echo [ERROR] Download failed. Check internet connection.
         pause
         exit /b 1
     )
     
-    :: Install for current user to avoid UAC blocking
-    echo    Installing Node.js...
+    echo        Installing Node.js...
     start /wait msiexec /i node_install.msi /quiet /norestart
     
     del node_install.msi
     set "NEEDS_RESTART=1"
-    echo ✅ Node.js installed.
+    echo [OK] Node.js installed.
 ) else (
-    echo ✅ Node.js is ready.
+    echo [OK] Node.js is ready.
 )
 
-:: --- PYTHON CHECK & INSTALL ---
-:: Check for 'py' launcher or 'python'
+:: --- PYTHON CHECK ---
 where python >nul 2>nul
 if %errorlevel% neq 0 (
-    echo 🐍 Python not found. Installing Python 3.11...
+    echo [INFO] Python not found. Installing Python 3.11...
     
-    echo    Downloading Python...
+    echo        Downloading Python...
     powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe' -OutFile 'python_install.exe'"
     
     if not exist python_install.exe (
-        echo ❌ Download failed.
+        echo [ERROR] Download failed.
         pause
         exit /b 1
     )
 
-    echo    Installing Python (Current User)...
-    :: InstallAllUsers=0 (No Admin needed), PrependPath=1 (Add to PATH)
+    echo        Installing Python...
     start /wait python_install.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0 Include_tcltk=0 Include_launcher=1
     
     del python_install.exe
     set "NEEDS_RESTART=1"
-    echo ✅ Python installed.
+    echo [OK] Python installed.
 ) else (
-    echo ✅ Python is ready.
+    echo [OK] Python is ready.
 )
 
 :: --- RESTART CHECK ---
 if "%NEEDS_RESTART%"=="1" (
     echo.
     echo ========================================================
-    echo ⚠️  IMPORTANT: Tools were installed.
-    echo    Windows requires a restart of the terminal to see them.
+    echo [IMPORTANT] New tools were installed.
+    echo             Windows requires a restart of the terminal.
     echo.
-    echo    1. CLOSE this window.
-    echo    2. OPEN a new command prompt/terminal.
-    echo    3. RUN .\install.bat again.
+    echo   1. CLOSE this window.
+    echo   2. OPEN a new command prompt.
+    echo   3. RUN .\install.bat again.
     echo ========================================================
     echo.
     pause
     exit /b 0
 )
 
-:: --- BACKEND SETUP (Virtual Env) ---
+:: --- BACKEND SETUP ---
 echo.
-echo 🐍 Verification: Settings up Virtual Environment...
+echo [INFO] Setting up Python Virtual Environment...
 
-:: Create venv
 if not exist venv (
-    echo    Creating venv...
+    echo        Creating venv...
     python -m venv venv
     if !errorlevel! neq 0 (
-        echo ❌ Error creating venv. Python might not be in PATH yet.
-        echo    Please restart this script/terminal.
+        echo [ERROR] Failed to create venv.
+        echo         Please restart this script.
         pause
         exit /b 1
     )
 )
 
-:: Activate venv
-echo    Activating venv...
+echo        Activating venv...
 call venv\Scripts\activate.bat
 
-:: Install Requirements
-echo 📦 Installing Python Dependencies...
+echo [INFO] Installing Python Dependencies...
 pip install -r requirements.txt
 if !errorlevel! neq 0 (
-    echo ❌ Pip install failed.
+    echo [ERROR] Pip install failed.
     pause
     exit /b 1
 )
 
 :: --- FRONTEND SETUP ---
 echo.
-echo 📦 Installing Frontend Dependencies...
+echo [INFO] Installing Frontend Dependencies...
 call npm install
 if !errorlevel! neq 0 (
-    echo ❌ npm install failed. Node.js might not be in PATH yet.
-    echo    Please restart this script/terminal.
+    echo [ERROR] npm install failed.
+    echo         Please restart this script.
     pause
     exit /b 1
 )
 
 echo.
 echo ==============================================
-echo ✅ Setup Fully Complete!
+echo [OK] Setup Fully Complete!
 echo ==============================================
 echo.
 echo To start: .\start.bat
