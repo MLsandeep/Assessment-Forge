@@ -21,16 +21,32 @@ AI-powered assessment authoring platform for educators and test developers. Gene
 - **Python 3** (v3.9+) - [Download](https://python.org)
 - **Google AI API Key** - [Get one here](https://aistudio.google.com/apikey)
 
-### Step 1: Clone & Install
+### Step 1: Clone & Auto-Install
 ```bash
 git clone https://github.com/MLsandeep/Assessment-Forge.git
 cd Assessment-Forge
-./install.sh
 ```
 
-### Step 2: Start the App
+**Mac / Linux:**
+```bash
+./install.sh
+```
+_(Auto-installs Node.js & Python if missing on Mac)_
+
+**Windows:**
+```cmd
+install.bat
+```
+
+### Step 2: Run
+**Mac / Linux:**
 ```bash
 ./start.sh
+```
+
+**Windows:**
+```cmd
+start.bat
 ```
 
 ### Step 3: Open in Browser
