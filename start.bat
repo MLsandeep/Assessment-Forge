@@ -1,30 +1,25 @@
 @echo off
-:: ==============================================
-:: Assessment Forge - Windows Start Script
-:: ==============================================
+SETLOCAL
+TITLE Assessment Forge - Auto Launcher
 
-:: Activate Virtual Environment
-if exist venv\Scripts\activate.bat (
-    call venv\Scripts\activate.bat
-) else (
-    echo [WARN] No virtual environment found. Python backend might fail.
-)
+:: 1. POWER-KILL PORTS
+powershell -Command "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"
+taskkill /f /im node.exe /t 2>nul
+taskkill /f /im python.exe /t 2>nul
 
-echo [INFO] Starting Assessment Forge...
-echo =================================
+:: 2. START BACKEND
+:: This opens in its own window and stays open
+start "Backend Server" cmd /k ".\venv\Scripts\python.exe rag_server.py"
 
-:: Start RAG Backend
-echo [INFO] Starting RAG Backend (Port 8000)...
-start "Assessment Forge RAG Backend" cmd /k "python rag_server.py"
+:: 3. AUTOMATIC WAIT
+echo [WAIT] Initializing AI Models... 
+:: /nobreak makes it so you don't have to press a key
+timeout /t 15 /nobreak >nul
 
-:: Wait a moment
-timeout /t 3 >nul
+:: 4. START FRONTEND
+:: This opens in its own window and stays open
+start "Frontend Server" cmd /k "npm run dev"
 
-:: Start Frontend
-echo [INFO] Starting Frontend (Port 3000)...
-start "Assessment Forge Frontend" cmd /k "npm run dev"
-
-echo.
-echo [OK] Services started in new windows!
-echo.
-echo To stop: Close the opened command windows.
+:: 5. FINISH
+echo [SUCCESS] Both services are launching. Closing manager...
+exit
