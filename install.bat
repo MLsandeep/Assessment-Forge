@@ -18,9 +18,9 @@ if !errorlevel! neq 0 (
     echo [INFO] Node.js not found. Installing portable Node.js v22...
     echo.
     
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '[1/6] Downloading Node.js...' -ForegroundColor Cyan; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.12.0/node-v22.12.0-win-x64.zip' -OutFile $env:TEMP\node.zip; Write-Host '[2/6] Creating destination folder...' -ForegroundColor Cyan; New-Item -ItemType Directory -Force -Path $env:USERPROFILE\Documents\NodeJS | Out-Null; Write-Host '[3/6] Extracting Node.js...' -ForegroundColor Cyan; Expand-Archive -Path $env:TEMP\node.zip -DestinationPath $env:USERPROFILE\Documents\NodeJS -Force; $nodePath = $env:USERPROFILE + '\Documents\NodeJS\node-v22.12.0-win-x64'; Write-Host '[4/6] Adding to current session...' -ForegroundColor Cyan; $env:Path += ';' + $nodePath; Write-Host '[5/6] Adding to permanent User PATH...' -ForegroundColor Cyan; $currentUserPath = [Environment]::GetEnvironmentVariable('Path', 'User'); if ($currentUserPath -notlike '*node-v22*') { [Environment]::SetEnvironmentVariable('Path', $currentUserPath + ';' + $nodePath, 'User') }; Write-Host '[6/6] Cleaning up...' -ForegroundColor Cyan; Remove-Item -Force $env:TEMP\node.zip -ErrorAction SilentlyContinue; Write-Host '[OK] Node.js installed!' -ForegroundColor Green"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '[1/6] Downloading Node.js...' -ForegroundColor Cyan; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.12.0/node-v22.12.0-win-x64.zip' -OutFile $env:TEMP\node.zip; Write-Host '[2/6] Creating destination folder...' -ForegroundColor Cyan; New-Item -ItemType Directory -Force -Path $env:USERPROFILE\Documents\NodeJS | Out-Null; Write-Host '[3/6] Extracting Node.js...' -ForegroundColor Cyan; Expand-Archive -Path $env:TEMP\node.zip -DestinationPath $env:USERPROFILE\Documents\NodeJS -Force; $nodePath = $env:USERPROFILE + '\Documents\NodeJS\node-v22.12.0-win-x64'; Write-Host '[4/6] Adding to current session...' -ForegroundColor Cyan; $env:Path += ';' + $nodePath; Write-Host '[5/6] Adding to permanent User PATH...' -ForegroundColor Cyan; $currentUserPath = [Environment]::GetEnvironmentVariable('Path', 'User'); if ($currentUserPath -notlike '*node-v22*') { [Environment]::SetEnvironmentVariable('Path', $currentUserPath + ';' + $nodePath, 'User') }; Write-Host '[6/6] Cleaning up...' -ForegroundColor Cyan; Remove-Item -Force $env:TEMP\node.zip -ErrorAction SilentlyContinue; Write-Host '[OK] Node.js installed!' -ForegroundColor Green; Write-Host '     Node.js version:' (node -v); Write-Host '     npm version:' (npm -v)"
 
-    :: Update PATH for this session
+    :: Update PATH for this batch session
     set "PATH=!PATH!;%USERPROFILE%\Documents\NodeJS\node-v22.12.0-win-x64"
     set "NEEDS_RESTART=1"
     
@@ -28,7 +28,8 @@ if !errorlevel! neq 0 (
     echo [OK] Node.js installed to %USERPROFILE%\Documents\NodeJS
 ) else (
     echo [OK] Node.js is already installed.
-    for /f "tokens=*" %%i in ('node -v') do echo      Version: %%i
+    for /f "tokens=*" %%i in ('node -v') do echo      Node.js Version: %%i
+    for /f "tokens=*" %%i in ('npm -v') do echo      npm Version: %%i
 )
 
 echo.
@@ -60,19 +61,12 @@ if !errorlevel! neq 0 (
 
 echo.
 
-:: --- RESTART CHECK ---
+:: --- INFO MESSAGE (No restart needed - PATH updated in current session) ---
 if "!NEEDS_RESTART!"=="1" (
     echo.
-    echo ========================================================
-    echo [IMPORTANT] New tools were installed.
-    echo             Windows requires a restart of this terminal.
+    echo [INFO] New tools were installed and added to the current session.
+    echo        Continuing with installation...
     echo.
-    echo   1. CLOSE this window.
-    echo   2. OPEN a new Command Prompt or PowerShell.
-    echo   3. Navigate back to this folder and run install.bat again.
-    echo ========================================================
-    echo.
-    exit /b 0
 )
 
 :: --- BACKEND SETUP (Python venv) ---
@@ -123,6 +117,25 @@ echo ============================================
 echo   [SUCCESS] Setup Complete!
 echo ============================================
 echo.
+
+:: --- REFRESH PATH FOR POWERSHELL ---
+if "!NEEDS_RESTART!"=="1" (
+    echo [INFO] Refreshing PATH for your terminal session...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:Path = [System.Environment]::GetEnvironmentVariable('Path','User') + ';' + [System.Environment]::GetEnvironmentVariable('Path','Machine'); Write-Host '[OK] PATH refreshed!' -ForegroundColor Green"
+    echo.
+)
+
+:: --- VERIFY INSTALLATIONS ---
+echo [INFO] Verifying installed tools...
+echo.
+echo        Node.js version:
+call node -v
+echo        npm version:
+call npm -v
+echo        Python version:
+call python --version
+echo.
+
 echo To start the application, run:
 echo    .\start.bat
 echo.
