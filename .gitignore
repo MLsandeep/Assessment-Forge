@@ -33,3 +33,4 @@ rag_data/
 test_data/
 venv/
 __pycache__/
+node_install.msi
