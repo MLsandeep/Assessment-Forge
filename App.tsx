@@ -273,8 +273,8 @@ function App() {
           </button>
         </nav>
 
-        {/* User Settings at Bottom */}
-        <div className="w-full px-2 pb-2">
+        {/* User Settings at Bottom - Always visible */}
+        <div className="mt-auto w-full px-2 pb-4">
           <button
             onClick={() => { setMode(AppMode.USER_SETTINGS); setGeneratedItem(null); }}
             className={`w-full p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition-colors ${mode === AppMode.USER_SETTINGS ? 'bg-gray-800 text-indigo-400' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
