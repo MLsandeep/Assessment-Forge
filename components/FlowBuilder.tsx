@@ -828,8 +828,8 @@ const FlowBuilderContent: React.FC<FlowBuilderProps> = ({ onItemGenerated, avail
                             onNodeContextMenu={onNodeContextMenu}
                             onInit={(instance) => {
                                 setReactFlowInstance(instance);
-                                // Auto fit view on load
-                                setTimeout(() => instance.fitView({ padding: 0.2 }), 100);
+                                // Auto fit view on load with more zoom out
+                                setTimeout(() => instance.fitView({ padding: 0.3, maxZoom: 0.85 }), 100);
                             }}
                             onDrop={onDrop}
                             onDragOver={onDragOver}
@@ -844,6 +844,7 @@ const FlowBuilderContent: React.FC<FlowBuilderProps> = ({ onItemGenerated, avail
                                 style: { stroke: '#6366f1', strokeWidth: 2 }
                             }}
                             fitView
+                            fitViewOptions={{ padding: 0.3, maxZoom: 0.85 }}
                             snapToGrid
                             deleteKeyCode={['Backspace', 'Delete']}
                         >
